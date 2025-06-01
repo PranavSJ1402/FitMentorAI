@@ -39,3 +39,27 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+
+
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_bXV0dWFsLWNpdmV0LTI0LmNsZXJrLmFjY291bnRzLmRldiQ
+CLERK_SECRET_KEY=sk_test_4bVB69Wm2Kky6vuAWPIO8ZsBzydip3p3toi8TBg5W7
+
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/signin
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/signup
+
+NEXT_PUBLIC_VAPI_WORKFLOW_ID=a247dcd5-cc83-4aac-b8cd-f0588cf4f680
+NEXT_PUBLIC_VAPI_ASSISTANT_ID=296a5a90-c316-47b9-8ff8-8f08f5e74207
+NEXT_PUBLIC_VAPI_API_KEY=e4b423c7-5d6d-480e-b377-ab62b553c266
+
+# Deployment used by `npx convex dev`
+CONVEX_DEPLOYMENT=dev:dashing-cheetah-142 # team: pranavsj1402, project: v-fit
+
+NEXT_PUBLIC_CONVEX_URL=https://dashing-cheetah-142.convex.cloud
+ 
+VITE_CLERK_FRONTEND_API_URL=https://verb-noun-00.clerk.accounts.dev
+
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_bXV0dWFsLWNpdmV0LTI0LmNsZXJrLmFjY291bnRzLmRldiQ
+CLERK_SECRET_KEY=sk_test_4bVB69Wm2Kky6vuAWPIO8ZsBzydip3p3toi8TBg5W7
+
+    
