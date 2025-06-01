@@ -119,14 +119,17 @@ function validateDietPlan(plan: any) {
     })),
   };
   return validatedPlan;
-}
 
-http.route({
+  
+}http.route({
   path: "/vapi/generate-program",
   method: "POST",
   handler: httpAction(async (ctx, request) => {
+    console.log("🚀 API endpoint hit!");
+    
     try {
       const payload = await request.json();
+      console.log("📥 Received payload:", JSON.stringify(payload, null, 2));
 
       const {
         user_id,
@@ -140,17 +143,29 @@ http.route({
         dietary_restrictions,
       } = payload;
 
-      console.log("Payload is here:", payload);
+      // Validate required fields
+      if (!user_id) {
+        console.error("❌ Missing user_id");
+        return new Response(JSON.stringify({ success: false, error: "Missing user ID" }), {
+          status: 400,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      console.log("✅ User ID:", user_id);
+      console.log("📊 Processing data for plan generation...");
 
       const model = genAI.getGenerativeModel({
         model: "gemini-2.0-flash-001",
         generationConfig: {
-          temperature: 0.4, // lower temperature for more predictable outputs
+          temperature: 0.4,
           topP: 0.9,
           responseMimeType: "application/json",
         },
       });
 
+      // Generate workout plan
+      console.log("🏋️ Generating workout plan...");
       const workoutPrompt = `You are an experienced fitness coach creating a personalized workout plan based on:
         Age: ${age}
         Height: ${height}
@@ -171,7 +186,7 @@ http.route({
         - For example: "sets": 3, "reps": 10
         - Do NOT use text like "reps": "As many as possible" or "reps": "To failure"
         - Instead use specific numbers like "reps": 12 or "reps": 15
-        - For cardio, use "sets": 1, "reps": 1 or another appropriate number
+        - For cardio, use "sets": 1, "reps": 30 (for 30 minutes)
         - NEVER include strings for numerical fields
         - NEVER add extra fields not shown in the example below
         
@@ -183,7 +198,7 @@ http.route({
               "day": "Monday",
               "routines": [
                 {
-                  "name": "Exercise Name",
+                  "name": "Push-ups",
                   "sets": 3,
                   "reps": 10
                 }
@@ -193,13 +208,17 @@ http.route({
         }
         
         DO NOT add any fields that are not in this example. Your response must be a valid JSON object with no additional text.`;
+
       const workoutResult = await model.generateContent(workoutPrompt);
       const workoutPlanText = workoutResult.response.text();
+      console.log("🏋️ Raw workout plan:", workoutPlanText);
 
-      // VALIDATE THE INPUT COMING FROM AI
       let workoutPlan = JSON.parse(workoutPlanText);
       workoutPlan = validateWorkoutPlan(workoutPlan);
+      console.log("✅ Validated workout plan:", JSON.stringify(workoutPlan, null, 2));
 
+      // Generate diet plan
+      console.log("🍎 Generating diet plan...");
       const dietPrompt = `You are an experienced nutrition coach creating a personalized diet plan based on:
         Age: ${age}
         Height: ${height}
@@ -236,14 +255,17 @@ http.route({
         }
         
         DO NOT add any fields that are not in this example. Your response must be a valid JSON object with no additional text.`;
+
       const dietResult = await model.generateContent(dietPrompt);
       const dietPlanText = dietResult.response.text();
+      console.log("🍎 Raw diet plan:", dietPlanText);
 
-      // VALIDATE THE INPUT COMING FROM AI
       let dietPlan = JSON.parse(dietPlanText);
       dietPlan = validateDietPlan(dietPlan);
+      console.log("✅ Validated diet plan:", JSON.stringify(dietPlan, null, 2));
 
-      // save to our DB: CONVEX
+      // Save to database
+      console.log("💾 Saving to database...");
       const planId = await ctx.runMutation(api.plans.createPlan, {
         userId: user_id,
         dietPlan,
@@ -252,22 +274,26 @@ http.route({
         name: `${fitness_goal} Plan - ${new Date().toLocaleDateString()}`,
       });
 
+      console.log("✅ Plan saved successfully! Plan ID:", planId);
+
       return new Response(
         JSON.stringify({
           success: true,
-          data: {
-            planId,
-            workoutPlan,
-            dietPlan,
-          },
+          message: "Plan created successfully",
+          planId: planId,
         }),
         {
           status: 200,
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
         }
       );
     } catch (error) {
-      console.error("Error generating fitness plan:", error);
+      console.error("❌ Error generating fitness plan:", error);
+      console.error("❌ Error stack:", error instanceof Error ? error.stack : 'No stack trace');
+      
       return new Response(
         JSON.stringify({
           success: false,
@@ -275,7 +301,10 @@ http.route({
         }),
         {
           status: 500,
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
         }
       );
     }
